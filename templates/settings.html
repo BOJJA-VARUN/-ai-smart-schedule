@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Schedule - Settings</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+    <div class="topbar-left">
+        <h2>📅 Smart Schedule</h2>
+    </div>
+    <div class="topbar-right">
+        <a href="/" class="btn btn-primary">← Back to Dashboard</a>
+        <span class="user-label">{{ username }}</span>
+        <a href="/logout" class="btn btn-secondary">Logout</a>
+    </div>
+</div>
+
+<div class="main">
+
+    <!-- SETTINGS CONTAINER -->
+    <div style="max-width: 800px; margin: 40px auto; flex: 1;">
+        <div style="background: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);">
+            
+            <h1 style="color: var(--primary); font-size: 28px; margin-bottom: 8px;">⚙️ Settings</h1>
+            <p style="color: var(--text-secondary); margin-bottom: 32px;">Configure your email and notification preferences</p>
+
+            {% if message %}
+            <div style="background: #d1fae5; color: #065f46; padding: 14px 16px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid var(--success);">
+                ✅ {{ message }}
+            </div>
+            {% endif %}
+
+            {% if error %}
+            <div style="background: #fee2e2; color: #991b1b; padding: 14px 16px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid var(--danger);">
+                ❌ {{ error }}
+            </div>
+            {% endif %}
+
+            <form method="POST" style="display: flex; flex-direction: column; gap: 32px;">
+
+                <!-- EMAIL CONFIGURATION SECTION -->
+                <div class="form-section">
+                    <div class="form-section-title">Email Configuration</div>
+                    
+                    <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 20px;">
+                        Set up your Gmail account to receive email reminders. 
+                        <a href="https://support.google.com/accounts/answer/185833" target="_blank" style="color: var(--primary); font-weight: 600;">
+                            Learn how to create an App Password
+                        </a>
+                    </p>
+
+                    <div class="form-group">
+                        <label for="email">Gmail Address</label>
+                        <input type="email" id="email" name="email" placeholder="your-email@gmail.com" 
+                               value="{{ settings.email if settings else '' }}" required>
+                        <small style="color: var(--text-secondary); margin-top: 6px;">
+                            Enter your Gmail address for receiving task reminders
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email_password">Gmail App Password</label>
+                        <input type="password" id="email_password" name="email_password" 
+                               placeholder="Enter your 8-character app password" value="">
+                        <small style="color: var(--text-secondary); margin-top: 6px;">
+                            Use an 8+ character App Password (not your regular Gmail password). 
+                            <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color: var(--primary);">
+                                Create App Password →
+                            </a>
+                        </small>
+                    </div>
+
+                    <div style="background: #f0f9ff; padding: 16px; border-radius: 10px; margin-top: 16px; border-left: 4px solid var(--primary);">
+                        <p style="margin: 0; color: var(--text-primary); font-size: 13px;">
+                            <strong>💡 Why App Password?</strong><br>
+                            Gmail doesn't allow regular passwords for third-party apps. Creating an App Password (8+ characters) is more secure.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- NOTIFICATION PREFERENCES SECTION -->
+                <div class="form-section">
+                    <div class="form-section-title">Notification Preferences</div>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 16px;">
+                        
+                        <!-- Dashboard Alerts -->
+                        <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 14px; background: #f1f5f9; border-radius: 10px; transition: all 0.3s ease;">
+                            <input type="checkbox" name="dashboard_alerts" id="dashboard_alerts" 
+                                   {% if settings.dashboard_alerts %}checked{% endif %} 
+                                   style="width: 20px; height: 20px; cursor: pointer;">
+                            <div>
+                                <div style="font-weight: 600; color: var(--text-primary);">📊 Dashboard Alerts</div>
+                                <small style="color: var(--text-secondary);">
+                                    See reminders in the notification banner when you open the app
+                                </small>
+                            </div>
+                        </label>
+
+                        <!-- Email Alerts -->
+                        <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 14px; background: #f1f5f9; border-radius: 10px; transition: all 0.3s ease;">
+                            <input type="checkbox" name="email_alerts" id="email_alerts" 
+                                   {% if settings.email_alerts %}checked{% endif %} 
+                                   style="width: 20px; height: 20px; cursor: pointer;">
+                            <div>
+                                <div style="font-weight: 600; color: var(--text-primary);">📧 Email Alerts</div>
+                                <small style="color: var(--text-secondary);">
+                                    Receive email notifications for upcoming tasks (requires Gmail setup)
+                                </small>
+                            </div>
+                        </label>
+
+                        <!-- Browser Alerts -->
+                        <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 14px; background: #f1f5f9; border-radius: 10px; transition: all 0.3s ease;">
+                            <input type="checkbox" name="browser_alerts" id="browser_alerts" 
+                                   {% if settings.browser_alerts %}checked{% endif %} 
+                                   style="width: 20px; height: 20px; cursor: pointer;">
+                            <div>
+                                <div style="font-weight: 600; color: var(--text-primary);">🔔 Browser Notifications</div>
+                                <small style="color: var(--text-secondary);">
+                                    Get pop-up notifications on your desktop (requires permission)
+                                </small>
+                            </div>
+                        </label>
+
+                    </div>
+                </div>
+
+                <!-- NOTIFICATION TYPES -->
+                <div class="form-section">
+                    <div class="form-section-title">When You'll Be Notified</div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div style="background: #f0f9ff; padding: 16px; border-radius: 10px;">
+                            <p style="margin: 0 0 12px 0; font-weight: 600; color: var(--primary);">📅 Dashboard Alerts</p>
+                            <ul style="margin: 0; padding-left: 20px; color: var(--text-secondary); font-size: 13px;">
+                                <li>When you log in</li>
+                                <li>Shows all pending reminders</li>
+                                <li>Instant dismissal</li>
+                            </ul>
+                        </div>
+                        
+                        <div style="background: #f0f9ff; padding: 16px; border-radius: 10px;">
+                            <p style="margin: 0 0 12px 0; font-weight: 600; color: var(--primary);">📧 Email Alerts</p>
+                            <ul style="margin: 0; padding-left: 20px; color: var(--text-secondary); font-size: 13px;">
+                                <li>At configured time before</li>
+                                <li>Full task details included</li>
+                                <li>Requires Gmail setup</li>
+                            </ul>
+                        </div>
+
+                        <div style="background: #f0f9ff; padding: 16px; border-radius: 10px;">
+                            <p style="margin: 0 0 12px 0; font-weight: 600; color: var(--primary);">🔔 Browser Notifications</p>
+                            <ul style="margin: 0; padding-left: 20px; color: var(--text-secondary); font-size: 13px;">
+                                <li>Every minute check</li>
+                                <li>Real-time pop-ups</li>
+                                <li>Requires browser permission</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BUTTONS -->
+                <div style="display: flex; gap: 12px;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Save Settings</button>
+                    <a href="/" class="btn btn-secondary" style="flex: 1; text-decoration: none;">Cancel</a>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>
