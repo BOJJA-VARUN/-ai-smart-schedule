@@ -112,16 +112,27 @@
 <script>
 function askAI() {
     let task = document.querySelector("input[name='task']").value;
-    let desc = document.querySelector("textarea[name='description']").value;
 
     fetch("/ai-task", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({task: task + " " + desc})
+        body: JSON.stringify({task: task})
     })
     .then(res => res.json())
     .then(data => {
-        document.getElementById("ai-result").innerText = data.result;
+
+        // ✅ Set priority
+        document.getElementById("priority").value = data.priority;
+
+        // ✅ Set deadline
+        let today = new Date();
+        today.setDate(today.getDate() + data.days);
+
+        let formatted = today.toISOString().split('T')[0];
+        document.getElementById("deadline").value = formatted;
+
+        // ✅ Show message
+        document.getElementById("ai-result").innerText = data.text;
     });
 }
 </script>
