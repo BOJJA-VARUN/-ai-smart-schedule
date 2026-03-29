@@ -678,3 +678,10 @@ if __name__ == "__main__":
     # Run on all network interfaces (0.0.0.0) so it's accessible from other devices
     # Port 5000 - accessible as http://YOUR_IP:5000 from other laptops
     app.run(debug=True, host='0.0.0.0', port=5000)
+#---------ai task---------
+@app.route("/ai-task", methods=["POST"])
+def ai_task():
+    data = request.json
+    task = data.get("task", "")
+
+    return {"result": "AI working: " + task}
