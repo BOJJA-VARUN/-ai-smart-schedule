@@ -682,6 +682,14 @@ if __name__ == "__main__":
 @app.route("/ai-task", methods=["POST"])
 def ai_task():
     data = request.json
-    task = data.get("task", "")
+    task = data.get("task", "").lower()
 
-    return {"result": "AI working: " + task}
+    # Simple AI logic
+    if "urgent" in task or "asap" in task:
+        return {"priority": 1, "days": 1, "text": "High priority task"}
+    elif "meeting" in task:
+        return {"priority": 2, "days": 2, "text": "Meeting task"}
+    elif "study" in task:
+        return {"priority": 3, "days": 5, "text": "Learning task"}
+    else:
+        return {"priority": 2, "days": 3, "text": "Normal task"}
