@@ -1,3 +1,6 @@
-flask
+Flask
 gunicorn
-apscheduler
+APScheduler
+razorpay
+requests
+Werkzeug
