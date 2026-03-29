@@ -27,6 +27,14 @@
                 <div class="form-group">
                     <label for="task">Task Name *</label>
                     <input type="text" id="task" name="task" placeholder="Enter task name" required>
+
+                    <!-- 🤖 AI Button -->
+                    <button type="button" onclick="askAI()" style="margin-top:10px;">
+                        Ask AI 🤖
+                    </button>
+
+                    <!-- AI Result -->
+                    <p id="ai-result" style="margin-top:10px; color:#333;"></p>
                 </div>
 
                 <div class="form-group">
@@ -99,6 +107,24 @@
         </form>
     </div>
 </div>
+
+<!-- 🤖 AI SCRIPT -->
+<script>
+function askAI() {
+    let task = document.querySelector("input[name='task']").value;
+    let desc = document.querySelector("textarea[name='description']").value;
+
+    fetch("/ai-task", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({task: task + " " + desc})
+    })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById("ai-result").innerText = data.result;
+    });
+}
+</script>
 
 </body>
 </html>
