@@ -1,6 +1,8 @@
 import os
 import sqlite3
 import smtplib
+import threading
+import time
 from contextlib import closing
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
@@ -61,6 +63,8 @@ SMTP_PORT = 587
 DEFAULT_SENDER_EMAIL = os.getenv("SENDER_EMAIL", "")
 DEFAULT_SENDER_PASSWORD = os.getenv("SENDER_PASSWORD", "")
 FREE_TASK_LIMIT = 5
+LAST_REMINDER_CHECK_TS = 0.0
+REMINDER_CHECK_LOCK = threading.Lock()
 
 
 # Database helpers
@@ -376,6 +380,24 @@ def check_and_send_reminders():
             mark_reminder_sent(reminder_id)
 
 
+def maybe_check_reminders():
+    """Fallback trigger for platforms where background schedulers are unreliable."""
+    global LAST_REMINDER_CHECK_TS
+
+    now_ts = time.time()
+    if now_ts - LAST_REMINDER_CHECK_TS < 60:
+        return
+
+    if not REMINDER_CHECK_LOCK.acquire(blocking=False):
+        return
+
+    try:
+        LAST_REMINDER_CHECK_TS = now_ts
+        check_and_send_reminders()
+    finally:
+        REMINDER_CHECK_LOCK.release()
+
+
 # Session and access helpers
 def ensure_logged_in():
     if "user_id" not in session:
@@ -396,6 +418,12 @@ def user_task_count(user_id):
         cur = conn.cursor()
         cur.execute("SELECT COUNT(*) FROM tasks WHERE user_id=?", (user_id,))
         return cur.fetchone()[0]
+
+
+@app.before_request
+def reminder_fallback_runner():
+    # Render and similar platforms may not keep in-process schedulers alive reliably.
+    maybe_check_reminders()
 
 # Dashboard
 @app.route("/")
