@@ -434,31 +434,42 @@ def dashboard():
         return login_redirect
 
     user_id = session["user_id"]
+
     with closing(get_db_connection()) as conn:
         cur = conn.cursor()
+
+        # Get username
         cur.execute("SELECT username FROM users WHERE id=?", (user_id,))
         user = cur.fetchone()
+        username = user[0] if user else "User"
 
-        cur.execute(
-            """
+        # Get tasks
+        cur.execute("""
             SELECT id, task, description, priority, deadline, deadline_time, category, status
             FROM tasks
             WHERE user_id=?
             ORDER BY deadline, deadline_time
-            """,
-            (user_id,),
-        )
+        """, (user_id,))
         tasks = cur.fetchall()
 
-    preferences = get_notification_preferences(user_id)
-    pending_reminders = []
-    if preferences["dashboard_alerts"]:
-        pending_reminders = [
-            (row[0], row[4], row[5], row[6], row[3])
-            for row in get_pending_reminders_for_user(user_id, for_dashboard=True)
-        ]
-    username = user[0] if user else "User"
+    # Calculate completed
     completed_tasks = sum(1 for task in tasks if task[7] == "completed")
+
+    # 🔥 FIXED REMINDER LOGIC
+    pending_reminders = []
+    now = datetime.now()
+
+    for reminder in get_pending_reminders_for_user(user_id, for_dashboard=True):
+        reminder_time = calculate_reminder_datetime(
+            reminder[5],  # deadline
+            reminder[6],  # time
+            reminder[3]   # reminder type
+        )
+
+        if reminder_time and now >= reminder_time:
+            pending_reminders.append(
+                (reminder[0], reminder[4], reminder[5], reminder[6], reminder[3])
+            )
 
     return render_template(
         "dashboard.html",
