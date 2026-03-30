@@ -1,6 +1,0 @@
-Flask
-gunicorn
-APScheduler
-razorpay
-requests
-Werkzeug
