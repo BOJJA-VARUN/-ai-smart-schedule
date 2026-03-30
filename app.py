@@ -907,24 +907,16 @@ def ai_task():
 # Test email delivery using saved settings
 @app.route("/test-email")
 def test_email():
-    login_redirect = ensure_logged_in()
-    if login_redirect:
-        return login_redirect
-
-    settings = get_user_settings(session["user_id"])
-    if not settings or not settings[0]:
-        return "Configure your email in Settings first.", 400
-    if not DEFAULT_SENDER_EMAIL or not DEFAULT_SENDER_PASSWORD:
-        return "App sender email is not configured on the server.", 500
-
     sent = send_email(
-        to_email=settings[0],
-        subject="Smart Schedule Test Email",
-        body="<p>Your email settings are working.</p>",
+        to_email="bvarunnani2819@gmail.com",  # 👈 your email
+        subject="Test Email",
+        body="<p>Working!</p>",
         sender_email=DEFAULT_SENDER_EMAIL,
         sender_password=DEFAULT_SENDER_PASSWORD,
     )
-    return "Email sent!" if sent else ("Email failed to send.", 500)
+
+    return "Email sent!" if sent else "Email failed"
+
 
 # Upgrade page
 @app.route("/upgrade")
