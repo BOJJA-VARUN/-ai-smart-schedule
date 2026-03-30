@@ -7,7 +7,7 @@ from contextlib import closing
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-
+from datetime import datetime
 from flask import Flask, jsonify, redirect, render_template, request, session
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -459,18 +459,31 @@ def dashboard():
     pending_reminders = []
     now = datetime.now()
 
-    for reminder in get_pending_reminders_for_user(user_id, for_dashboard=True):
-        reminder_time = calculate_reminder_datetime(
-            reminder[5],  # deadline
-            reminder[6],  # time
-            reminder[3]   # reminder type
-        )
+    reminders = get_pending_reminders_for_user(user_id, for_dashboard=True)
 
-        if reminder_time and now >= reminder_time:
-            pending_reminders.append(
-                (reminder[0], reminder[4], reminder[5], reminder[6], reminder[3])
+    for reminder in reminders:
+        try:
+            reminder_id = reminder[0]
+            reminder_type = reminder[3]
+            task_name = reminder[4]
+            deadline = reminder[5]
+            deadline_time = reminder[6]
+
+            reminder_time = calculate_reminder_datetime(
+                deadline,
+                deadline_time,
+                reminder_type
             )
 
+        # ✅ FIXED INDENTATION
+            if reminder_time and now >= reminder_time:
+                pending_reminders.append(
+                    (reminder_id, task_name, deadline, deadline_time, reminder_type)
+            )
+
+        except Exception as e:
+            print("Reminder error:", e)
+   
     return render_template(
         "dashboard.html",
         tasks=tasks,
@@ -963,6 +976,7 @@ if BackgroundScheduler is not None and not app.debug:
     scheduler.start()
 
 
+#----run the app-----
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
