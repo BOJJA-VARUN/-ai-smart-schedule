@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Schedule - Add Task</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body class="auth-body">
+
+<div class="auth-container">
+    <div class="auth-card">
+        {% if error %}
+<div style="
+    background:#ff5722;
+    color:white;
+    padding:10px;
+    border-radius:6px;
+    margin-bottom:15px;
+    text-align:center;
+">
+    {{ error }}
+    
+    <br><br>
+    
+    <a href="/upgrade">
+        <button style="
+            padding:8px 15px;
+            border:none;
+            border-radius:5px;
+            background:white;
+            color:#ff5722;
+            font-weight:bold;
+        ">
+            Upgrade Now 🚀
+        </button>
+    </a>
+</div>
+{% endif %}
+        <div class="auth-header">
+            <h1>Create New Task</h1>
+            <p>Add a task to your schedule</p>
+        </div>
+
+        {% if error %}
+        <div class="alert alert-error">{{ error }}</div>
+        {% endif %}
+
+        <form method="POST" class="auth-form">
+            
+            <!-- Task Details Section -->
+            <div class="form-section">
+                <div class="form-section-title">Task Details</div>
+                
+                <div class="form-group">
+                    <label for="task">Task Name *</label>
+                    <input type="text" id="task" name="task" placeholder="Enter task name" required>
+
+                    <!-- 🤖 AI Button -->
+                    <button type="button" onclick="askAI()" style="margin-top:10px;">
+                        Ask AI 🤖
+                    </button>
+
+                    <!-- AI Result -->
+                    <p id="ai-result" style="margin-top:10px; color:#333;"></p>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" placeholder="Add task description (optional)"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <select id="category" name="category">
+                        <option value="General">General</option>
+                        <option value="Project">Project</option>
+                        <option value="Meeting">Meeting</option>
+                        <option value="Approval">Approval</option>
+                        <option value="Work">Work</option>
+                        <option value="Internal">Internal</option>
+                        <option value="Personal">Personal</option>
+                        <option value="Development">Development</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Schedule Section -->
+            <div class="form-section">
+                <div class="form-section-title">Schedule</div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="deadline">Deadline Date *</label>
+                        <input type="date" id="deadline" name="deadline" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="deadline_time">Deadline Time</label>
+                        <input type="time" id="deadline_time" name="deadline_time" value="09:00">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Priority & Reminder Section -->
+            <div class="form-section">
+                <div class="form-section-title">Priority & Reminder</div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="priority">Priority</label>
+                        <select id="priority" name="priority" required>
+                            <option value="1">🔴 High</option>
+                            <option value="2" selected>🟡 Medium</option>
+                            <option value="3">🟢 Low</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reminder_time">Remind Me</label>
+                        <select id="reminder_time" name="reminder_time">
+                            <option value="none">No Reminder</option>
+                            <option value="30_min_before" selected>30 minutes before</option>
+                            <option value="1_hour_before">1 hour before</option>
+                            <option value="2_hours_before">2 hours before</option>
+                            <option value="1_day_before">1 day before</option>
+                            <option value="2_days_before">2 days before</option>
+                            <option value="1_week_before">1 week before</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">Create Task</button>
+            <a href="/" class="btn btn-secondary btn-block" style="text-decoration: none; margin-top: 12px;">Cancel</a>
+        </form>
+    </div>
+</div>
+
+<!-- 🤖 AI SCRIPT -->
+<script>
+function askAI() {
+    let task = document.querySelector("input[name='task']").value;
+
+    fetch("/ai-task", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({task: task})
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        // ✅ Set priority
+        document.getElementById("priority").value = data.priority;
+
+        // ✅ Set deadline
+        let today = new Date();
+        today.setDate(today.getDate() + data.days);
+
+        let formatted = today.toISOString().split('T')[0];
+        document.getElementById("deadline").value = formatted;
+
+        // ✅ Show message
+        document.getElementById("ai-result").innerText = data.text;
+    });
+}
+</script>
+</body>
+</html>
