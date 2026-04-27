@@ -7,6 +7,8 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.11
+      - key: APP_TIMEZONE
+        value: Asia/Kolkata
       - key: DATABASE_PATH
         value: /var/data/database.db
       - key: FALLBACK_DATABASE_PATH
