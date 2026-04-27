@@ -90,11 +90,8 @@ def resolve_database_path():
                 os.makedirs(parent_dir, exist_ok=True)
             conn = sqlite3.connect(candidate)
             cur = conn.cursor()
-            cur.execute("SELECT name FROM sqlite_master LIMIT 1")
+            cur.execute("SELECT 1")
             cur.fetchone()
-            cur.execute("CREATE TABLE IF NOT EXISTS __healthcheck (id INTEGER)")
-            cur.execute("DROP TABLE IF EXISTS __healthcheck")
-            conn.commit()
             conn.close()
             DATABASE_PATH = candidate
             DATABASE_URI_MODE = False
@@ -102,9 +99,15 @@ def resolve_database_path():
         except sqlite3.Error as exc:
             print(f"Database unavailable at {candidate}: {exc}")
 
-    DATABASE_PATH = "file:smart_schedule?mode=memory&cache=shared"
-    DATABASE_URI_MODE = True
-    MEMORY_DB_KEEPALIVE = sqlite3.connect(DATABASE_PATH, uri=True)
+    # Avoid silently switching to an empty in-memory database.
+    # If both candidates fail initial probing, keep using the primary path
+    # so the app surfaces the real filesystem/database problem instead.
+    parent_dir = os.path.dirname(PRIMARY_DATABASE_PATH)
+    if parent_dir:
+        os.makedirs(parent_dir, exist_ok=True)
+    DATABASE_PATH = PRIMARY_DATABASE_PATH
+    DATABASE_URI_MODE = False
+    MEMORY_DB_KEEPALIVE = None
 
 
 def column_exists(cur, table_name, column_name):
