@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Schedule - Edit Task</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body class="auth-body">
+
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1>Edit Task</h1>
+            <p>Update your task details</p>
+        </div>
+
+        {% if error %}
+        <div class="alert alert-error">{{ error }}</div>
+        {% endif %}
+
+        <form method="POST" class="auth-form">
+            
+            <!-- Task Details Section -->
+            <div class="form-section">
+                <div class="form-section-title">Task Details</div>
+                
+                <div class="form-group">
+                    <label for="task">Task Name *</label>
+                    <input type="text" id="task" name="task" value="{{ task[1] }}" placeholder="Enter task name" required>
+                     <!-- 🤖 AI Button -->
+    <button type="button" onclick="askAI()" style="margin-top:10px;">
+        Ask AI 🤖
+    </button>
+
+    <!-- AI Result -->
+    <p id="ai-result" style="margin-top:10px;"></p>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" placeholder="Add task description (optional)">{{ task[2] or '' }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <select id="category" name="category">
+                        <option value="General" {% if task[6] == 'General' %}selected{% endif %}>General</option>
+                        <option value="Project" {% if task[6] == 'Project' %}selected{% endif %}>Project</option>
+                        <option value="Meeting" {% if task[6] == 'Meeting' %}selected{% endif %}>Meeting</option>
+                        <option value="Approval" {% if task[6] == 'Approval' %}selected{% endif %}>Approval</option>
+                        <option value="Work" {% if task[6] == 'Work' %}selected{% endif %}>Work</option>
+                        <option value="Internal" {% if task[6] == 'Internal' %}selected{% endif %}>Internal</option>
+                        <option value="Personal" {% if task[6] == 'Personal' %}selected{% endif %}>Personal</option>
+                        <option value="Development" {% if task[6] == 'Development' %}selected{% endif %}>Development</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Schedule Section -->
+            <div class="form-section">
+                <div class="form-section-title">Schedule</div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="deadline">Deadline Date *</label>
+                        <input type="date" id="deadline" name="deadline" value="{{ task[4] }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="deadline_time">Deadline Time</label>
+                        <input type="time" id="deadline_time" name="deadline_time" value="{{ task[5] or '09:00' }}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Priority & Status Section -->
+            <div class="form-section">
+                <div class="form-section-title">Priority & Status</div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="priority">Priority</label>
+                        <select id="priority" name="priority" required>
+                            <option value="1" {% if task[3] == 1 %}selected{% endif %}>🔴 High</option>
+                            <option value="2" {% if task[3] == 2 %}selected{% endif %}>🟡 Medium</option>
+                            <option value="3" {% if task[3] == 3 %}selected{% endif %}>🟢 Low</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="status">Status</label>
+                        <select id="status" name="status" required>
+                            <option value="pending" {% if task[7] == 'pending' %}selected{% endif %}>⏳ Pending</option>
+                            <option value="in_progress" {% if task[7] == 'in_progress' %}selected{% endif %}>⚙️ In Progress</option>
+                            <option value="completed" {% if task[7] == 'completed' %}selected{% endif %}>✅ Completed</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reminder Section -->
+            <div class="form-section">
+                <div class="form-section-title">Reminder</div>
+                
+                <div class="form-group">
+                    <label for="reminder_time">Remind Me</label>
+                    <select id="reminder_time" name="reminder_time">
+                        <option value="none">No Reminder</option>
+                        <option value="30_min_before">30 minutes before</option>
+                        <option value="1_hour_before">1 hour before</option>
+                        <option value="2_hours_before">2 hours before</option>
+                        <option value="1_day_before" selected>1 day before</option>
+                        <option value="2_days_before">2 days before</option>
+                        <option value="1_week_before">1 week before</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">Update Task</button>
+            <a href="/" class="btn btn-secondary btn-block" style="text-decoration: none; margin-top: 12px;">Cancel</a>
+        </form>
+    </div>
+</div>
+<script>
+function askAI() {
+    let task = document.querySelector("input[name='task']").value;
+
+    fetch("/ai-task", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({task: task})
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.result) {
+            document.getElementById("ai-result").innerText = data.result;
+            return;
+        }
+
+        document.getElementById("priority").value = data.priority;
+
+        let formatted = data.deadline;
+        if (!formatted) {
+            let today = new Date();
+            today.setDate(today.getDate() + (data.days || 0));
+            formatted = today.toISOString().split('T')[0];
+        }
+        document.getElementById("deadline").value = formatted;
+
+        document.getElementById("ai-result").innerText = data.text;
+    })
+    .catch(() => {
+        document.getElementById("ai-result").innerText = "AI suggestion could not be generated right now.";
+    });
+}
+</script>
+</body>
+</html>

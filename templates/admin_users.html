@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Schedule - Admin Users</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+<div class="topbar">
+    <div class="topbar-left">
+        <h2>Admin Panel</h2>
+    </div>
+    <div class="topbar-right">
+        <a href="/" class="btn btn-primary">Back to Dashboard</a>
+        <span class="user-label">{{ username }}</span>
+        <a href="/logout" class="btn btn-secondary">Logout</a>
+    </div>
+</div>
+
+<div class="main" style="display: block; padding: 32px;">
+    <div style="max-width: 1100px; margin: 0 auto; background: white; border-radius: 18px; box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08); padding: 28px;">
+        <h1 style="margin-top: 0; color: #0f172a;">User Upgrade Control</h1>
+        <p style="color: #475569; margin-bottom: 24px;">
+            Signed in as admin: <strong>{{ admin_username }}</strong>
+        </p>
+
+        {% if users|length == 0 %}
+        <div class="empty-message">No users found.</div>
+        {% else %}
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #f8fafc; text-align: left;">
+                        <th style="padding: 14px;">Username</th>
+                        <th style="padding: 14px;">Email</th>
+                        <th style="padding: 14px;">Current Plan</th>
+                        <th style="padding: 14px;">Joined</th>
+                        <th style="padding: 14px;">Upgrade Options</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr style="border-top: 1px solid #e2e8f0;">
+                        <td style="padding: 14px;">
+                            {{ user[1] }}
+                            {% if user[1] == admin_username %}
+                            <span class="reminder-badge" style="margin-left: 8px; background: #dcfce7; color: #166534;">Admin</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 14px;">{{ user[2] or 'No email' }}</td>
+                        <td style="padding: 14px;">
+                            {% if user[5] == 'team_pro' %}
+                            <span class="reminder-badge" style="background: #dbeafe; color: #1d4ed8;">Team Pro</span>
+                            {% elif user[5] == 'premium' %}
+                            <span class="reminder-badge">Premium</span>
+                            {% elif user[5] == 'starter' %}
+                            <span class="reminder-badge" style="background: #ede9fe; color: #6d28d9;">Starter</span>
+                            {% else %}
+                            <span class="reminder-badge" style="background: #fef3c7; color: #92400e;">Free</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 14px;">{{ user[4] or 'Unknown' }}</td>
+                        <td style="padding: 14px;">
+                            <form method="POST" action="/admin/users/{{ user[0] }}/upgrade" style="margin: 0; display: flex; gap: 8px; flex-wrap: wrap;">
+                                <button type="submit" name="plan" value="starter" class="btn btn-secondary">Starter</button>
+                                <button type="submit" name="plan" value="premium" class="btn btn-primary">Premium</button>
+                                <button type="submit" name="plan" value="team_pro" class="btn btn-primary" style="background: #1d4ed8;">Team Pro</button>
+                                <button type="submit" name="plan" value="free" class="btn btn-secondary" style="background: #6b7280;">Free</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+</body>
+</html>

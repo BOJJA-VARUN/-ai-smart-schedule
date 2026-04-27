@@ -1,0 +1,5 @@
+.env
+__pycache__/
+*.pyc
+database_fallback.db
+database_fallback.db-journal
