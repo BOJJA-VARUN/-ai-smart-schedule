@@ -9,9 +9,9 @@ from contextlib import closing
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from datetime import datetime
 from flask import Flask, jsonify, redirect, render_template, request, session
 from werkzeug.security import check_password_hash, generate_password_hash
+from zoneinfo import ZoneInfo
 
 try:
     from apscheduler.schedulers.background import BackgroundScheduler
@@ -68,6 +68,8 @@ SMTP_PORT = 587
 DEFAULT_SENDER_EMAIL = os.getenv("SENDER_EMAIL", "")
 DEFAULT_SENDER_PASSWORD = os.getenv("SENDER_PASSWORD", "")
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "23951A04N6").strip()
+APP_TIMEZONE = os.getenv("APP_TIMEZONE", "Asia/Kolkata").strip() or "Asia/Kolkata"
+REMINDER_CRON_TOKEN = os.getenv("REMINDER_CRON_TOKEN", "").strip()
 FREE_TASK_LIMIT = 5
 LAST_REMINDER_CHECK_TS = 0.0
 REMINDER_CHECK_LOCK = threading.Lock()
@@ -273,6 +275,17 @@ def clamp(value, minimum, maximum):
     return max(minimum, min(maximum, value))
 
 
+def get_app_timezone():
+    try:
+        return ZoneInfo(APP_TIMEZONE)
+    except Exception:
+        return ZoneInfo("Asia/Kolkata")
+
+
+def now_in_app_timezone():
+    return datetime.now(get_app_timezone())
+
+
 def extract_json_object(text):
     if not text:
         return None
@@ -290,7 +303,7 @@ def extract_json_object(text):
 
 def build_ai_fallback(task_text):
     task_text = (task_text or "").strip().lower()
-    today = datetime.now().date()
+    today = now_in_app_timezone().date()
 
     if not task_text:
         return {
@@ -392,13 +405,13 @@ def normalize_ai_response(payload, fallback_task_text):
     if deadline:
         try:
             parsed_deadline = datetime.strptime(deadline, "%Y-%m-%d").date()
-            days = max((parsed_deadline - datetime.now().date()).days, 0)
+            days = max((parsed_deadline - now_in_app_timezone().date()).days, 0)
         except ValueError:
             deadline = ""
 
     days = clamp(days, 0, 60)
     if not deadline:
-        deadline = (datetime.now().date() + timedelta(days=days)).isoformat()
+        deadline = (now_in_app_timezone().date() + timedelta(days=days)).isoformat()
 
     text = str(payload.get("text", "") or fallback["text"]).strip() or fallback["text"]
 
@@ -437,7 +450,7 @@ def send_email(to_email, subject, body, sender_email, sender_password):
 def calculate_reminder_datetime(deadline, deadline_time, reminder_time):
     deadline_dt = datetime.strptime(
         f"{deadline} {deadline_time or '09:00'}", "%Y-%m-%d %H:%M"
-    )
+    ).replace(tzinfo=get_app_timezone())
 
     offsets = {
         "30_min_before": timedelta(minutes=30),
@@ -507,7 +520,7 @@ def get_pending_reminders_for_user(user_id=None, for_email=False, for_dashboard=
         query += " AND r.dashboard_dismissed = 0"
     query += " ORDER BY t.deadline, t.deadline_time"
 
-    now = datetime.now()
+    now = now_in_app_timezone()
     reminders_to_send = []
 
     with closing(get_db_connection()) as conn:
@@ -1125,6 +1138,28 @@ def api_mark_reminder(reminder_id):
     dismiss_dashboard_reminder(reminder_id, session["user_id"])
 
     return jsonify({"success": True})
+
+
+@app.route("/internal/run-reminders", methods=["GET", "POST"])
+def run_reminders_internal():
+    if not REMINDER_CRON_TOKEN:
+        return jsonify({"success": False, "error": "Reminder cron token is not configured."}), 503
+
+    provided_token = request.headers.get("X-Reminder-Token", "").strip()
+    if not provided_token:
+        provided_token = request.args.get("token", "").strip()
+
+    if provided_token != REMINDER_CRON_TOKEN:
+        return jsonify({"success": False, "error": "Unauthorized"}), 401
+
+    check_and_send_reminders()
+    return jsonify(
+        {
+            "success": True,
+            "checked_at": now_in_app_timezone().isoformat(),
+            "timezone": APP_TIMEZONE,
+        }
+    )
 
 # AI task suggestion endpoint
 @app.route("/ai-task", methods=["POST"])
